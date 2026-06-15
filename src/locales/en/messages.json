@@ -1,0 +1,10 @@
+{
+  "extName": {
+    "message": "VtuberVN+",
+    "description": "Extension name"
+  },
+  "extDescription": {
+    "message": "Tiện ích mở rộng chính thức cho VtuberVN, hỗ trợ quản lý và đồng bộ Youtube Chat.",
+    "description": "Extension description"
+  }
+}
