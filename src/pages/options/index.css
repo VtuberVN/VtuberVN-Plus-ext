@@ -1,0 +1,264 @@
+/* =============================================
+   VtuberVN+ Extension — Options Page
+   Flat / Glassmorphism — Không dùng Tailwind CSS
+   ============================================= */
+
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap');
+
+/* === Reset === */
+*, *::before, *::after {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+
+/* === Base === */
+html, body {
+  min-height: 100vh;
+  background-color: #0f0f14;
+  color: #e8e8f0;
+  font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+  font-size: 14px;
+  line-height: 1.6;
+  -webkit-font-smoothing: antialiased;
+}
+
+/* Wrapper ngoài */
+.options {
+  min-height: 100vh;
+  padding: 24px 16px 40px;
+  background:
+    radial-gradient(ellipse at 20% 10%, rgba(232, 58, 90, 0.08) 0%, transparent 55%),
+    radial-gradient(ellipse at 80% 90%, rgba(120, 30, 60, 0.06) 0%, transparent 55%),
+    #0f0f14;
+}
+
+/* === Form container === */
+.options-form {
+  width: 100%;
+  max-width: 600px;
+  margin: 0 auto;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  min-width: 320px;
+}
+
+/* === Tiêu đề === */
+.options-title {
+  text-align: center;
+  font-size: 22px;
+  font-weight: 700;
+  color: #e83a5a;
+  letter-spacing: -0.01em;
+  margin-bottom: 2px;
+  line-height: 1.3;
+}
+
+.options-subtitle {
+  text-align: center;
+  font-size: 13px;
+  font-weight: 500;
+  color: #a0a0b0;
+  margin-bottom: 16px;
+  line-height: 1.5;
+}
+
+/* === Option item — card === */
+.option-item {
+  background: rgba(255, 255, 255, 0.04);
+  border: 1px solid rgba(255, 255, 255, 0.07);
+  border-radius: 10px;
+  padding: 14px 16px;
+  transition: border-color 0.2s ease, background 0.2s ease;
+}
+
+.option-item:hover {
+  background: rgba(255, 255, 255, 0.06);
+  border-color: rgba(232, 58, 90, 0.25);
+}
+
+/* === Tên tùy chọn & Tooltip === */
+.option-name-wrapper {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 6px;
+}
+
+.option-name {
+  font-size: 13.5px;
+  font-weight: 600;
+  color: #e83a5a;
+  letter-spacing: 0.01em;
+}
+
+.option-tooltip {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 16px;
+  height: 16px;
+  border-radius: 50%;
+  background: rgba(255, 255, 255, 0.1);
+  color: #a0a0b0;
+  font-size: 11px;
+  font-weight: 600;
+  cursor: help;
+  transition: all 0.2s ease;
+}
+
+.option-tooltip:hover {
+  background: #e83a5a;
+  color: #fff;
+}
+
+/* === Hàng nội dung === */
+.option-row {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end; /* Đẩy control sang phải vì không còn description */
+  gap: 12px;
+}
+
+/* (Đã xóa .option-description) */
+
+/* === Control wrapper === */
+.option-control {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-shrink: 0;
+}
+
+/* === Slider (số) === */
+.option-slider {
+  -webkit-appearance: none;
+  appearance: none;
+  width: 100px;
+  height: 4px;
+  border-radius: 4px;
+  background: rgba(255, 255, 255, 0.12);
+  cursor: pointer;
+  outline: none;
+  transition: background 0.2s;
+}
+
+.option-slider::-webkit-slider-thumb {
+  -webkit-appearance: none;
+  appearance: none;
+  width: 16px;
+  height: 16px;
+  border-radius: 50%;
+  background: #e83a5a;
+  cursor: pointer;
+  border: none;
+  transition: background 0.2s, transform 0.15s;
+}
+
+.option-slider::-webkit-slider-thumb:hover {
+  background: #ff5577;
+  transform: scale(1.15);
+}
+
+.option-slider::-moz-range-thumb {
+  width: 16px;
+  height: 16px;
+  border-radius: 50%;
+  background: #e83a5a;
+  cursor: pointer;
+  border: none;
+}
+
+.option-slider-value {
+  font-size: 12px;
+  font-weight: 600;
+  color: #e83a5a;
+  min-width: 20px;
+  text-align: right;
+}
+
+/* === Toggle switch (boolean) === */
+.option-toggle {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  cursor: pointer;
+  min-height: 44px; /* touch target tối thiểu */
+  padding: 10px 0;
+}
+
+/* Ẩn input gốc */
+.option-toggle__input {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border: 0;
+}
+
+/* Track (nền) */
+.option-toggle__track {
+  position: relative;
+  display: inline-block;
+  width: 40px;
+  height: 22px;
+  border-radius: 11px;
+  background: rgba(255, 255, 255, 0.12);
+  border: 1.5px solid rgba(255, 255, 255, 0.1);
+  transition: background 0.25s ease, border-color 0.25s ease;
+}
+
+.option-toggle__input:checked ~ .option-toggle__track {
+  background: #e83a5a;
+  border-color: #e83a5a;
+}
+
+.option-toggle__input:focus-visible ~ .option-toggle__track {
+  outline: 2px solid #e83a5a;
+  outline-offset: 2px;
+}
+
+/* Thumb (nút tròn) */
+.option-toggle__thumb {
+  position: absolute;
+  top: 2px;
+  left: 2px;
+  width: 16px;
+  height: 16px;
+  border-radius: 50%;
+  background: #ffffff;
+  transition: transform 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.4);
+}
+
+.option-toggle__input:checked ~ .option-toggle__track .option-toggle__thumb {
+  transform: translateX(18px);
+}
+
+/* === Responsive mobile === */
+@media (max-width: 480px) {
+  .options {
+    padding: 16px 12px 32px;
+  }
+
+  .options-form {
+    min-width: 280px;
+  }
+
+  .options-title {
+    font-size: 19px;
+  }
+
+  .option-item {
+    padding: 12px 14px;
+  }
+
+  .option-slider {
+    width: 80px;
+  }
+}

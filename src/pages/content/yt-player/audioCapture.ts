@@ -17,14 +17,26 @@
 console.log('[VtuberVN+] Audio Capture: Loaded (standby mode)');
 
 const FFT_SIZE = 128;       // 64 frequency bins — nhẹ hơn, đủ cho visualizer
-const TARGET_FPS = 20;      // 20 FPS — tiết kiệm CPU, vẫn mượt
-const FRAME_INTERVAL = 1000 / TARGET_FPS;
+const ACTIVE_FPS = 60;      // Khi mở sóng nhạc (mượt mà)
+const BACKGROUND_FPS = 5;   // Khi bị khuất / ẩn / thu nhỏ (tiết kiệm CPU)
 const HEARTBEAT_INTERVAL = 5000; // Gửi heartbeat mỗi 5 giây
+
+// Trạng thái hiển thị để áp dụng Adaptive FPS dựa trên VisibilityState của tab
+let isDocumentVisible = document.visibilityState === 'visible';
+
+document.addEventListener('visibilitychange', () => {
+  isDocumentVisible = document.visibilityState === 'visible';
+});
+
+function getIsVisible() {
+  return isDocumentVisible;
+}
 
 let audioContext: AudioContext | null = null;
 let analyser: AnalyserNode | null = null;
 let sourceNode: MediaElementAudioSourceNode | null = null;
 let captureLoopTimer: ReturnType<typeof setTimeout> | null = null;
+let animationFrameId: number | null = null;
 let heartbeatTimer: ReturnType<typeof setInterval> | null = null;
 let lastFrameTime = 0;
 let isCapturing = false;
@@ -105,15 +117,31 @@ function setupAudioCapture(video: HTMLVideoElement): boolean {
 
 /**
  * Vòng lặp gửi frequency data lên parent window.
- * Dùng setTimeout thay vì requestAnimationFrame để tránh bị ngưng khi iframe bị ẩn (visibility: hidden).
+ * Adaptive FPS dựa trên trạng thái hoạt động của tab:
+ * - Luôn sử dụng setTimeout thay vì requestAnimationFrame vì iframe ẩn (được set bằng visibility: hidden)
+ *   có thể bị trình duyệt tạm dừng/chặn rAF hoàn toàn.
+ * - Chạy ở ACTIVE_FPS (60 FPS) khi tab đang hiển thị, hoặc BACKGROUND_FPS (5 FPS) khi tab ẩn xuống nền.
  * Mỗi message kèm sessionId để main app filter đúng nguồn.
  */
 function sendAudioData() {
-  if (captureLoopTimer !== null) clearTimeout(captureLoopTimer);
-  captureLoopTimer = setTimeout(sendAudioData, FRAME_INTERVAL);
+  if (captureLoopTimer !== null) {
+    clearTimeout(captureLoopTimer);
+    captureLoopTimer = null;
+  }
+  if (animationFrameId !== null) {
+    cancelAnimationFrame(animationFrameId);
+    animationFrameId = null;
+  }
+
+  const visible = getIsVisible();
+  const currentFps = visible ? ACTIVE_FPS : BACKGROUND_FPS;
+  const frameInterval = 1000 / currentFps;
+
+  // Luôn dùng setTimeout để tránh bị trình duyệt tạm dừng rAF do iframe ẩn
+  captureLoopTimer = setTimeout(sendAudioData, frameInterval);
 
   const timestamp = performance.now();
-  if (timestamp - lastFrameTime < FRAME_INTERVAL - 5) return;
+  if (timestamp - lastFrameTime < frameInterval - 5) return;
   lastFrameTime = timestamp;
 
   // Liên tục kiểm tra xem video có bị YouTube thay thế (re-render DOM) không
@@ -155,6 +183,10 @@ function startCapture(sessionId: string) {
     clearTimeout(captureLoopTimer);
     captureLoopTimer = null;
   }
+  if (animationFrameId !== null) {
+    cancelAnimationFrame(animationFrameId);
+    animationFrameId = null;
+  }
   if (heartbeatTimer) {
     clearInterval(heartbeatTimer);
     heartbeatTimer = null;
@@ -177,8 +209,8 @@ function startCapture(sessionId: string) {
 
   // setupAudioCapture kiểm tra isCapturing → trả true nếu đã setup rồi (không tạo lại AudioContext)
   if (setupAudioCapture(video)) {
-    if (captureLoopTimer !== null) clearTimeout(captureLoopTimer);
-    captureLoopTimer = setTimeout(sendAudioData, FRAME_INTERVAL);
+    // Khởi động loop
+    sendAudioData();
     startHeartbeat(sessionId);
     console.log(`[VtuberVN+] Audio Capture: ${isCapturing ? 'Restarted' : 'Started'} (session: ${sessionId})`);
 
@@ -217,8 +249,7 @@ function waitForVideoThenStart(sessionId: string) {
       const handleReady = () => {
         if (currentSessionId === sessionId) {
           if (setupAudioCapture(v)) {
-            if (captureLoopTimer !== null) clearTimeout(captureLoopTimer);
-            captureLoopTimer = setTimeout(sendAudioData, FRAME_INTERVAL);
+            sendAudioData();
             console.log(`[VtuberVN+] Audio Capture: Started (delayed, session: ${sessionId})`);
             try {
               window.parent.postMessage({
@@ -252,6 +283,10 @@ function stopCapture() {
   if (captureLoopTimer !== null) {
     clearTimeout(captureLoopTimer)
     captureLoopTimer = null
+  }
+  if (animationFrameId !== null) {
+    cancelAnimationFrame(animationFrameId);
+    animationFrameId = null;
   }
   if (heartbeatTimer) {
     clearInterval(heartbeatTimer)

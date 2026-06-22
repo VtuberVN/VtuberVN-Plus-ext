@@ -4,7 +4,7 @@
     "description": "Extension name"
   },
   "extDescription": {
-    "message": "Tiện ích mở rộng chính thức cho VtuberVN, hỗ trợ quản lý và đồng bộ Youtube Chat.",
+    "message": "Official companion extension for VtuberVN. Synchronizes watch history and likes, facilitates YouTube comment/chat moderation, and forwards audio data for the music visualizer.",
     "description": "Extension description"
   }
 }

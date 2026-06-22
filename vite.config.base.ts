@@ -3,7 +3,7 @@ import { resolve } from 'path';
 import { defineDynamicResource, ManifestV3Export } from '@crxjs/vite-plugin';
 import { defineConfig, BuildOptions } from 'vite';
 import tsconfigPaths from 'vite-tsconfig-paths'
-import { stripDevIcons } from './custom-vite-plugins';
+import { stripDevIcons, crxI18n } from './custom-vite-plugins';
 import manifest from './manifest.json';
 import devManifest from './manifest.dev.json';
 import pkg from './package.json';
@@ -11,7 +11,7 @@ import pkg from './package.json';
 
 const isDev = process.env.__DEV__ === 'true';
 // set this flag to true, if you want localization support
-// const localize = false;
+const localize = true;
 
 export const baseManifest = {
   ...manifest,
@@ -24,11 +24,11 @@ export const baseManifest = {
   //   ...manifest.host_permissions,
   //   ...(isDev ? devManifest.host_permissions : []),
   // ],
-  // ...(localize ? {
-  //   name: '__MSG_extName__',
-  //   description: '__MSG_extDescription__',
-  //   default_locale : 'en'
-  // } : {})
+  ...(localize ? {
+    name: '__MSG_extName__',
+    description: '__MSG_extDescription__',
+    default_locale : 'vi'
+  } : {})
   // web_accessible_resources: [
   //   ...manifest.web_accessible_resources,
   //   defineDynamicResource({
@@ -57,7 +57,7 @@ export default defineConfig({
     tsconfigPaths(),
     react(),
     stripDevIcons(isDev),
-    // crxI18n({ localize, src: './src/locales' })
+    crxI18n({ localize, src: './src/locales' })
   ],
   publicDir: resolve(__dirname, 'public'),
 });

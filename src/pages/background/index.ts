@@ -111,10 +111,7 @@ contextMenus.onClicked.addListener(async (info, tab) => {
   await openVtuberVNUrl(linkUrl, tab, isMultiview);
 });
 
-action.onClicked.addListener(async (tab) => {
-  if (!tab.id || !tab.url) return;
-  await openVtuberVNUrl(tab.url, tab);
-});
+// action.onClicked đã được thay bằng default_popup trong manifest
 
 runtime.onMessage.addListener((request, sender, sendResponse) => {
   if (request.greeting === "ytButton_Click" && request.pageUrl && sender.tab) {

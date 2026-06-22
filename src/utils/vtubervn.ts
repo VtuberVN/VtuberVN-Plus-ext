@@ -1,8 +1,8 @@
 import { Tabs } from "webextension-polyfill";
 import { Options } from "@utils";
 
-const HOLODEX_URL_HOME = "https://vtuberhub.vn";
-const HOLODEX_URL_REGEX = /^(?:[^:]+:\/\/)?(?:[^\/]+\.)?vtuberhub.vn\b/i;
+const VTUBERVN_URL_HOME = "https://vtuberhub.vn";
+const VTUBERVN_URL_REGEX = /^(?:[^:]+:\/\/)?(?:[^\/]+\.)?vtuberhub.vn\b/i;
 const YOUTUBE_HOSTNAME_REGEX = /^(?:[^\/]+\.)?youtube.com/i;
 const FEED_PATHNAME_REGEX = /^(?:\/?$|\/feed\b)/i; // pathname matches homepage or any feed like subscriptions
 const CHANNEL_URL_REGEX = /(?<=[=\/?&#])[A-Za-z0-9\-_]{24}(?=[=\/?&#]|$)/;
@@ -11,17 +11,15 @@ const CANONICAL_URL_REGEX =
   /\/(?:channel\/[A-Za-z0-9\-_]{24}|(?:shorts\/|watch\?v=)[A-Za-z0-9\-_]{11})\b/;
 
 export async function openVtuberVNUrl(url: string, tab: Tabs.Tab, isMultiview: boolean = false) {
-  const holodexUrl = await getVtuberVNUrl(url, isMultiview);
-  if (!holodexUrl) return;
+  const vtubervnUrl = await getVtuberVNUrl(url, isMultiview);
+  if (!vtubervnUrl) return;
 
   const currentTabId = tab.id;
-  if (await Options.get("openVtuberVNInNewTab") && tab.title !== "New Tab")
-    await chrome.tabs.create({ url: holodexUrl, index: tab.index + 1 });
-  else if (currentTabId)
-    await chrome.tabs.update(currentTabId, { url: holodexUrl });
+  if (currentTabId)
+    await chrome.tabs.update(currentTabId, { url: vtubervnUrl });
   else
     // fallback behavior
-    await chrome.tabs.create({ url: holodexUrl, index: 9999 });
+    await chrome.tabs.create({ url: vtubervnUrl, index: 9999 });
 }
 
 /**
@@ -35,7 +33,7 @@ export async function openVtuberVNUrl(url: string, tab: Tabs.Tab, isMultiview: b
 export async function getVtuberVNUrl(url: string | undefined, isMultiview: boolean) {
   if (url) {
     /** Do nothing if the given URL is VtuberVN */
-    if (HOLODEX_URL_REGEX.test(url)) {
+    if (VTUBERVN_URL_REGEX.test(url)) {
       return null;
     }
 
@@ -56,22 +54,22 @@ export async function getVtuberVNUrl(url: string | undefined, isMultiview: boole
   }
 
   /** Return VtuberVN URL after all tests exhausted */
-  if (isMultiview) return HOLODEX_URL_HOME.concat(`/multiview`);
-  return HOLODEX_URL_HOME;
+  if (isMultiview) return VTUBERVN_URL_HOME.concat(`/multiview`);
+  return VTUBERVN_URL_HOME;
 }
 
 /** Attempt to match given URL */
 function matchUrl(testUrl: string, isMultiview: boolean): string | undefined {
   const videoMatch = testUrl.match(VIDEO_URL_REGEX);
   if (videoMatch) {
-    if (isMultiview) return HOLODEX_URL_HOME.concat(`/multiview/AAUY${ videoMatch[0] }%2CUAEYchat`);
-    return HOLODEX_URL_HOME.concat(`/watch/${ videoMatch[0] }`);
+    if (isMultiview) return VTUBERVN_URL_HOME.concat(`/multiview/AAUY${ videoMatch[0] }%2CUAEYchat`);
+    return VTUBERVN_URL_HOME.concat(`/watch/${ videoMatch[0] }`);
   }
 
   const channelMatch = testUrl.match(CHANNEL_URL_REGEX);
   if (channelMatch) {
-    if (isMultiview) return HOLODEX_URL_HOME.concat(`/multiview`)
-    return HOLODEX_URL_HOME.concat(`/channel/${ channelMatch[0] }`);
+    if (isMultiview) return VTUBERVN_URL_HOME.concat(`/multiview`)
+    return VTUBERVN_URL_HOME.concat(`/channel/${ channelMatch[0] }`);
   }
 }
 

@@ -1,6 +1,6 @@
 import fs from 'fs';
 import { resolve } from 'path';
-// import type { PluginOption } from 'vite';
+import type { PluginOption } from 'vite';
 
 // plugin to remove dev icons from prod build
 export function stripDevIcons(isDev: boolean) {
@@ -21,7 +21,6 @@ export function stripDevIcons(isDev: boolean) {
 }
 
 // plugin to support i18n 
-/*
 export function crxI18n (options: { localize: boolean, src: string }): PluginOption {
   if (!options.localize) return null
 
@@ -55,4 +54,4 @@ export function crxI18n (options: { localize: boolean, src: string }): PluginOpt
       }
     }
   }
-}*/
+}

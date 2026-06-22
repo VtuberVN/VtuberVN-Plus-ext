@@ -14,7 +14,7 @@ const manifest = {
     type: "module",
   },
   action: {
-    // default_popup: "src/pages/popup/index.html",
+    default_popup: "src/pages/options/index.html",
     default_icon: {
       "16": "src/icons/16.png",
       "32": "src/icons/32.png",
@@ -37,7 +37,6 @@ const manifest = {
   host_permissions: [
     "*://*.youtube.com/*",
     "*://*.vtuberhub.vn/*",
-    "*://*.vtuberhub.vn/*",
     "http://localhost:8080/*",
     "http://127.0.0.1:8080/*",
   ],
@@ -45,11 +44,10 @@ const manifest = {
     {
       matches: [
         "*://*.vtuberhub.vn/*",
-        "*://*.vtuberhub.vn/*",
         "http://localhost:8080/*",
         "http://127.0.0.1:8080/*"
       ],
-      js: ["src/pages/content/holodex/contentScript.ts"],
+      js: ["src/pages/content/vtubervn/contentScript.ts"],
       all_frames: true,
       run_at: "document_start",
     },

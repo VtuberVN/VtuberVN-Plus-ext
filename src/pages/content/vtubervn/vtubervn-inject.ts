@@ -31,4 +31,25 @@ window.addEventListener('message', (event) => {
   }
 });
 
+// ─── Locale Sync (popup i18n) ─────────────────────────────────────
+// Detect ngôn ngữ đang dùng trên VtuberVN → gửi về contentScript → lưu storage
+function detectAndSyncLocale() {
+  // Nuxt i18n lưu locale trong: html[lang], hoặc localStorage key 'i18n_redirected'
+  const htmlLang = document.documentElement.lang; // vd: "vi", "en"
+  const storedLocale = localStorage.getItem('i18n_redirected'); // vd: "vi", "en"
+  const locale = htmlLang || storedLocale || navigator.language.split('-')[0] || 'vi';
+  const normalized = locale.startsWith('vi') ? 'vi' : 'en';
+  window.postMessage({ type: 'VTUBERVN_LOCALE_SYNC', locale: normalized }, '*');
+}
+
+// Sync ngay khi inject
+detectAndSyncLocale();
+
+// Sync lại khi Nuxt navigate (SPA routing thay đổi ngôn ngữ)
+const localeObserver = new MutationObserver(() => {
+  detectAndSyncLocale();
+});
+localeObserver.observe(document.documentElement, { attributes: true, attributeFilter: ['lang'] });
+
 export {};
+
