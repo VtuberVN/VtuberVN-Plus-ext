@@ -43,6 +43,37 @@ let isCapturing = false;
 let currentSessionId: string | null = null;
 let capturedVideo: HTMLVideoElement | null = null;
 
+interface CustomWindow extends Window {
+  webkitAudioContext?: typeof AudioContext;
+}
+
+const userGestures = ['click', 'mousedown', 'keydown', 'touchstart'];
+
+const resumeOnGesture = () => {
+  if (audioContext && audioContext.state === 'suspended') {
+    audioContext.resume().then(() => {
+      console.log('[VtuberVN+] Audio Capture: AudioContext resumed via user gesture');
+      removeGestureListeners();
+    }).catch((err) => {
+      console.warn('[VtuberVN+] Audio Capture: Resume failed via user gesture -', err);
+    });
+  } else if (audioContext && audioContext.state === 'running') {
+    removeGestureListeners();
+  }
+};
+
+const removeGestureListeners = () => {
+  userGestures.forEach(gesture => {
+    document.removeEventListener(gesture, resumeOnGesture);
+  });
+};
+
+const addGestureListeners = () => {
+  userGestures.forEach(gesture => {
+    document.addEventListener(gesture, resumeOnGesture, { passive: true });
+  });
+};
+
 /**
  * Tìm <video> element trong YouTube embed.
  */
@@ -67,7 +98,11 @@ function setupAudioCapture(video: HTMLVideoElement): boolean {
   try {
     // Tạo AudioContext nếu chưa có hoặc đã bị close
     if (!audioContext || audioContext.state === 'closed') {
-      audioContext = new (window.AudioContext || (window as any).webkitAudioContext)()
+      const AudioCtx = window.AudioContext || (window as CustomWindow).webkitAudioContext;
+      if (!AudioCtx) {
+        throw new Error('AudioContext is not supported in this browser');
+      }
+      audioContext = new AudioCtx();
     }
 
     if (!analyser) {
@@ -93,8 +128,11 @@ function setupAudioCapture(video: HTMLVideoElement): boolean {
         if (audioContext && audioContext.state === 'suspended') {
           audioContext.resume().then(() => {
             console.log('[VtuberVN+] Audio Capture: AudioContext resumed via video event')
+            removeGestureListeners();
           }).catch((err) => {
             console.warn('[VtuberVN+] Audio Capture: Resume failed via video event -', err)
+            // Nếu resume qua video event (autoplay) thất bại, lắng nghe tương tác người dùng
+            addGestureListeners();
           })
         }
       }
@@ -154,7 +192,8 @@ function sendAudioData() {
   if (!analyser || !audioContext || !currentSessionId) return;
 
   if (audioContext.state === 'suspended') {
-    audioContext.resume().catch(() => {});
+    // Không tự động gọi resume() định kỳ trong vòng lặp để tránh spam cảnh báo Autoplay Policy.
+    // AudioContext sẽ được resume qua sự kiện video play hoặc khi người dùng tương tác.
     return;
   }
 
@@ -299,6 +338,7 @@ function stopCapture() {
 
 function cleanup() {
   stopCapture();
+  removeGestureListeners();
   if (sourceNode) {
     try { sourceNode.disconnect(); } catch (_) {}
     sourceNode = null;
