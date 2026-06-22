@@ -16,7 +16,7 @@
 
 console.log('[VtuberVN+] Audio Capture: Loaded (standby mode)');
 
-const FFT_SIZE = 128;       // 64 frequency bins — nhẹ hơn, đủ cho visualizer
+const FFT_SIZE = 512;       // 256 frequency bins — cân đối, mượt mà cho visualizer
 const ACTIVE_FPS = 60;      // Khi mở sóng nhạc (mượt mà)
 const BACKGROUND_FPS = 5;   // Khi bị khuất / ẩn / thu nhỏ (tiết kiệm CPU)
 const HEARTBEAT_INTERVAL = 5000; // Gửi heartbeat mỗi 5 giây
