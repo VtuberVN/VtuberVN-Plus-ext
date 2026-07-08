@@ -60,7 +60,7 @@ export default defineConfig({
     crxI18n({ localize, src: './src/locales' })
   ],
   publicDir: resolve(__dirname, 'public'),
-  esbuild: {
-    pure: isDev ? [] : ['console.log', 'console.info', 'console.debug'],
-  },
+  // esbuild: {
+  //   pure: isDev ? [] : ['console.log', 'console.info', 'console.debug'],
+  // },
 });

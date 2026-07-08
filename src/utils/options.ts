@@ -5,13 +5,20 @@ const schema = {
   // key: default-value
   vtubervnButtonInYoutube: true,
   visualizerMaxFps: 60,
-  enableCrowdsourcing: false,
+  enableCrowdsourcing: true,
 };
-type Schema = typeof schema;
+export type Schema = typeof schema;
 export const translations = {
   vi: {
     title: "VtuberVN+",
     subtitle: "Tùy chỉnh tiện ích",
+    popup: {
+      nowPlaying: "Đang phát",
+      openOnVtuberVN: "Mở trên VtuberVN",
+      liveNow: "Đang Live",
+      channels: "kênh",
+      settings: "Cài đặt"
+    },
     vtubervnButtonInYoutube: {
       name: "Nút VtuberVN trên YouTube",
       description:
@@ -56,6 +63,13 @@ export const translations = {
   en: {
     title: "VtuberVN+",
     subtitle: "Extension Options",
+    popup: {
+      nowPlaying: "Now Playing",
+      openOnVtuberVN: "Open on VtuberVN",
+      liveNow: "Live Now",
+      channels: "channels",
+      settings: "Settings"
+    },
     vtubervnButtonInYoutube: {
       name: "VtuberVN Button on YouTube",
       description:

@@ -1,6 +1,6 @@
 import { Options, loadSVGElement } from "@utils";
 import { runtime } from "webextension-polyfill";
-import logoRaw from "@assets/img/logo.svg?raw"
+import logoRaw from "@assets/img/logo.svg?raw";
 import outlineRaw from "@assets/img/outline.svg?raw";
 
 // VtuberVN button injected into YouTube pages
@@ -15,14 +15,19 @@ import outlineRaw from "@assets/img/outline.svg?raw";
   let pageType: string;
 
   const selectors = {
-    shorts: "ytd-reel-video-renderer[is-active] #actions reel-action-bar-view-model",
+    shorts:
+      "ytd-reel-video-renderer[is-active] #actions reel-action-bar-view-model",
     watch: "#actions #top-level-buttons-computed",
     buttonID: "#vtubervn-button",
     tooltip: "yt-tooltip",
     tooltipID: "#vtubervn-tooltip",
-    button: () => { return pageType === "shorts" ? selectors.shorts : selectors.watch; },
-    buttonFull: () => { return selectors.button() + " " + selectors.buttonID; },
-  }
+    button: () => {
+      return pageType === "shorts" ? selectors.shorts : selectors.watch;
+    },
+    buttonFull: () => {
+      return selectors.button() + " " + selectors.buttonID;
+    },
+  };
 
   // This fires on both new page (re)load and internal navigation to another page
   // allowing it to clear the rendered flag.
@@ -37,7 +42,7 @@ import outlineRaw from "@assets/img/outline.svg?raw";
     if (!ytdApp) return;
 
     render.tooltip(ytdApp.querySelector(selectors.tooltip));
-    console.time("[VtuberVN+] MutationObserver")
+    console.time("[VtuberVN+] MutationObserver");
 
     // Setup mutation observer to (re)render on Watch and Shorts pages,
     // both for new page (re)load and internal navigation to another page.
@@ -46,45 +51,52 @@ import outlineRaw from "@assets/img/outline.svg?raw";
       const iteration = ++counter;
       setTimeout(async () => {
         if (ytdApp.querySelector(selectors.buttonFull())) return;
-        await render.button(ytdApp.querySelector(selectors.button()))
+        await render.button(ytdApp.querySelector(selectors.button()));
 
         if (!ytdApp.querySelector(selectors.buttonFull())) return;
-        console.timeEnd("[VtuberVN+] MutationObserver")
-        console.log("[VtuberVN+] MutationObserver Iteration:", iteration)
+        console.timeEnd("[VtuberVN+] MutationObserver");
+        console.log("[VtuberVN+] MutationObserver Iteration:", iteration);
         observer.disconnect();
       }, 200);
     }).observe(ytdApp, { childList: true, subtree: true });
   });
 
-  const render: { tooltip: Function, button: Function } = {
+  const render: { tooltip: Function; button: Function } = {
     tooltip: async (target: Element) => {
       const nodes = document.querySelectorAll(selectors.tooltipID);
       if (nodes.length === 1) return;
 
-      console.debug("[VtuberVN+] (re)rendering VtuberVN tooltip within", target);
+      console.debug(
+        "[VtuberVN+] (re)rendering VtuberVN tooltip within",
+        target,
+      );
       const cloneTooltip = target.firstChild?.cloneNode(true) as HTMLElement;
       cloneTooltip.id = "vtubervn-tooltip";
       target.appendChild(cloneTooltip);
 
-      console.debug("[VtuberVN+] VtuberVN tooltip rendered:",
-        target.querySelector(selectors.tooltipID));
+      console.debug(
+        "[VtuberVN+] VtuberVN tooltip rendered:",
+        target.querySelector(selectors.tooltipID),
+      );
     },
     button: async (target: Element) => {
-      const nodes = target.querySelectorAll(selectors.buttonID)
-      for (const node of nodes)
-        node.remove();
+      const nodes = target.querySelectorAll(selectors.buttonID);
+      for (const node of nodes) node.remove();
 
       console.debug("[VtuberVN+] (re)rendering VtuberVN button within", target);
       const container = await createButton(target);
       if (!container) return;
 
-      if (pageType === "shorts") target.insertBefore(container, target.firstChild);
-      else target.querySelector("yt-button-view-model")?.after(container)
+      if (pageType === "shorts")
+        target.insertBefore(container, target.firstChild);
+      else target.querySelector("yt-button-view-model")?.after(container);
 
-      console.debug("[VtuberVN+] VtuberVN button rendered:",
-        target.querySelector(selectors.buttonID));
+      console.debug(
+        "[VtuberVN+] VtuberVN button rendered:",
+        target.querySelector(selectors.buttonID),
+      );
     },
-  }
+  };
 
   function ytButton_Click() {
     const response = runtime.sendMessage({
@@ -107,16 +119,19 @@ import outlineRaw from "@assets/img/outline.svg?raw";
 
     const rect = ytButton.getBoundingClientRect();
     const leftSide = rect.x + (rect.width - 60) / 2 + window.scrollX;
-    const topSide = rect.y + rect.height + 16 + window.scrollY
+    const topSide = rect.y + rect.height + 16 + window.scrollY;
 
-    ytPopover.classList.add("ytTooltipContainerDefaultTooltipContent", ":popover-open");
-    ytPopover.style.inset = `${ topSide }px auto auto ${ leftSide }px`;
+    ytPopover.classList.add(
+      "ytTooltipContainerDefaultTooltipContent",
+      ":popover-open",
+    );
+    ytPopover.style.inset = `${topSide}px auto auto ${leftSide}px`;
     ytPopover.style.boxSizing = "content-box";
     ytPopover.style.display = "block";
     ytPopover.textContent = "VtuberVN";
 
     setTimeout(() => {
-      ytPopover.classList.remove(":popover-open")
+      ytPopover.classList.remove(":popover-open");
     }, 100);
   }
 
@@ -134,7 +149,11 @@ import outlineRaw from "@assets/img/outline.svg?raw";
       ytPopover.style.removeProperty("box-sizing");
       ytPopover.style.removeProperty("display");
       ytPopover.textContent = "";
-      ytPopover.classList.remove("ytTooltipContainerDefaultTooltipContent", "ytPopoverComponentHostClosing", ":popover-open")
+      ytPopover.classList.remove(
+        "ytTooltipContainerDefaultTooltipContent",
+        "ytPopoverComponentHostClosing",
+        ":popover-open",
+      );
     }, 50);
   }
 
@@ -152,7 +171,7 @@ import outlineRaw from "@assets/img/outline.svg?raw";
     ytButton.classList.add("yt-watch-vtubervn-btn");
     ytButton.setAttribute("aria-label", "Mở trên VtuberVN");
 
-    let label = ytButton.nextSibling
+    let label = ytButton.nextSibling;
     if (!label) {
       const child = ytButton.firstChild;
       if (!child) return;

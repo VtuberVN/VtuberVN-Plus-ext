@@ -1,8 +1,8 @@
 import { Tabs } from "webextension-polyfill";
 import { Options } from "@utils";
 
-const VTUBERVN_URL_HOME = "https://vtuberhub.vn";
-const VTUBERVN_URL_REGEX = /^(?:[^:]+:\/\/)?(?:[^\/]+\.)?vtuberhub.vn\b/i;
+const VTUBERVN_URL_HOME = import.meta.env?.DEV ? "http://localhost:8080" : "https://vtuberhub.vn";
+const VTUBERVN_URL_REGEX = /^(?:[^:]+:\/\/)?(?:(?:[^\/]+\.)?vtuberhub\.vn|localhost:8080|127\.0\.0\.1:8080)\b/i;
 const YOUTUBE_HOSTNAME_REGEX = /^(?:[^\/]+\.)?youtube.com/i;
 const FEED_PATHNAME_REGEX = /^(?:\/?$|\/feed\b)/i; // pathname matches homepage or any feed like subscriptions
 const CHANNEL_URL_REGEX = /(?<=[=\/?&#])[A-Za-z0-9\-_]{24}(?=[=\/?&#]|$)/;

@@ -45,23 +45,27 @@ export function extractAndSendChannelEmojis(res: any): void {
       if (emo.emojiId) emojiMap.set(emo.emojiId, emo);
     }
 
-    // YouTube API mới: root emojis rỗng → quét đệ quy toàn response
+    // YouTube API mới: root emojis rỗng → tìm đệ quy an toàn không gây tràn RAM
     if (emojiMap.size === 0) {
-      const scanForEmojis = (obj: any, depth = 0) => {
-        if (!obj || typeof obj !== "object" || depth > 12) return;
+      const stack: any[] = [res];
+      while (stack.length > 0) {
+        const obj = stack.pop();
+        if (!obj || typeof obj !== "object") continue;
+        
         if (obj.emojiId && obj.image?.thumbnails) {
           emojiMap.set(obj.emojiId, obj);
-          return;
+          continue;
         }
-        for (const val of Object.values(obj)) {
-          if (Array.isArray(val)) {
-            for (const item of val) scanForEmojis(item, depth + 1);
-          } else if (val && typeof val === "object") {
-            scanForEmojis(val, depth + 1);
+        
+        for (const key in obj) {
+          if (Object.prototype.hasOwnProperty.call(obj, key)) {
+            const val = obj[key];
+            if (val && typeof val === "object") {
+              stack.push(val);
+            }
           }
         }
-      };
-      scanForEmojis(res);
+      }
     }
 
     const categories: EmojiCategory[] = [];

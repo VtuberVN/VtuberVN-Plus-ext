@@ -57,6 +57,7 @@ export function initApiHandlers(): void {
         try {
           const ytLikeData = await getYtLikeData();
           if (ytLikeData) {
+            console.log(`[VtuberVN+] checkLikeStatus -> Status: ${ytLikeData.likeStatus || 'INDIFFERENT'}, Subscribed: ${!!ytLikeData.isSubscribed}`);
             window.parent.postMessage(
               {
                 type: "VTUBERVN_LIKE_STATUS",
@@ -78,10 +79,34 @@ export function initApiHandlers(): void {
           const ytLikeData = await getYtLikeData();
           if (channelId && ytLikeData) {
             const res = await fetchYoutubeApi("browse", { browseId: channelId }, ytLikeData);
-            const header = res?.header?.c4TabbedHeaderRenderer;
-            const isSubscribed = !!(header?.subscribeButton?.subscribeButtonRenderer?.subscribed);
+            
+            // Hàm đệ quy tìm key trong object JSON (chống lại việc YouTube đổi cấu trúc UI)
+            const deepFind = (obj: any, key: string): any => {
+              if (obj === null || typeof obj !== 'object') return undefined;
+              if (key in obj) return obj[key];
+              for (const k in obj) {
+                const found = deepFind(obj[k], key);
+                if (found !== undefined) return found;
+              }
+              return undefined;
+            };
+
+            const subscribeBtn = deepFind(res, 'subscribeButtonRenderer');
+            const toggleBtn = deepFind(res, 'subscriptionNotificationToggleButtonRenderer');
+            
+            // YouTube UI cũ dùng subscribeButtonRenderer, UI mới có thể ẩn đi nhưng notificationPreferenceButton vẫn còn
+            const isSubscribed = !!(subscribeBtn?.subscribed || toggleBtn || deepFind(res, 'subscribed') === true);
+            let notificationState = 0; // 0 = not subbed or unknown
+            
+            if (isSubscribed) {
+              // 1 = All, 2 = Personalized, 3 = None
+              notificationState = toggleBtn?.currentStateId || 2;
+            }
+
+            console.log(`[VtuberVN+] checkSubscribeStatus -> Channel: ${channelId}, Subscribed: ${isSubscribed}, State: ${notificationState}`);
+            
             window.parent.postMessage(
-              { type: "VTUBERVN_SUBSCRIBE_STATUS", channelId, isSubscribed },
+              { type: "VTUBERVN_SUBSCRIBE_STATUS", channelId, isSubscribed, notificationState },
               "*",
             );
           }

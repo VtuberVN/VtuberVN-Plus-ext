@@ -44,8 +44,11 @@ const manifest = {
     {
       matches: [
         "*://*.vtuberhub.vn/*",
+        "*://vtuberhub.vn/*",
         "http://localhost:8080/*",
-        "http://127.0.0.1:8080/*"
+        "http://127.0.0.1:8080/*",
+        "http://localhost:3000/*",
+        "http://127.0.0.1:3000/*"
       ],
       js: ["src/pages/content/vtubervn/contentScript.ts"],
       all_frames: true,
@@ -62,6 +65,13 @@ const manifest = {
       js: ["src/pages/content/yt-watch/contentScript.ts"],
       all_frames: true,
       run_at: "document_start",
+    },
+    {
+      matches: ["*://*.youtube.com/embed/*"],
+      js: ["src/pages/content/yt-player/ytPlayerMain.ts"],
+      all_frames: true,
+      run_at: "document_start",
+      world: "MAIN",
     },
     {
       matches: ["*://*.youtube.com/embed/*"],
@@ -88,8 +98,11 @@ const manifest = {
       matches: [
         "*://*.youtube.com/*",
         "*://*.vtuberhub.vn/*",
+        "*://vtuberhub.vn/*",
         "http://localhost:8080/*",
-        "http://127.0.0.1:8080/*"
+        "http://127.0.0.1:8080/*",
+        "http://localhost:3000/*",
+        "http://127.0.0.1:3000/*"
       ]
     }
   ]
