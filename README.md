@@ -17,11 +17,11 @@ Phiên bản rút gọn siêu nhẹ của tiện ích mở rộng [VtuberVN](htt
 
 ### 1. Chrome / Edge / Brave / Cốc Cốc
 1. Mở `chrome://extensions/` &rarr; bật **Developer mode**.
-2. Kéo thả file `vtubervn-plus-v1-v1.1.3.crx` hoặc giải nén `vtubervn-plus-v1-v1.1.3-chrome.zip` và bấm **Load unpacked**.
+2. Kéo thả file `vtubervn-star-v1-v1.1.3.crx` hoặc giải nén `vtubervn-star-v1-v1.1.3-chrome.zip` và bấm **Load unpacked**.
 
 ### 2. Firefox
 1. Mở `about:addons` &rarr; chọn biểu tượng bánh răng ⚙️ &rarr; **Install Add-on From File...**.
-2. Chọn file `vtubervn-plus-v1-v1.1.3.xpi`.
+2. Chọn file `vtubervn-star-v1-v1.1.3.xpi`.
 
 ---
 
