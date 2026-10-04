@@ -31,7 +31,7 @@ export function extractAndSendChannelEmojis(res: any): void {
       setCurrentUserAvatarUrl(avatarUrl);
     }
 
-    // YouTube có thể đặt emojiPicker ở 2 vị trí khác nhau tùy phiên bản
+    // YouTube can place emojiPicker in 2 different locations depending on UI version
     const emojiPickerRenderer =
       simplebox?.emojiPicker?.emojiPickerRenderer ||
       simplebox?.emojiButton?.buttonRenderer?.navigationEndpoint
@@ -39,13 +39,13 @@ export function extractAndSendChannelEmojis(res: any): void {
 
     if (!emojiPickerRenderer?.categories) return;
 
-    // Build lookup map cho emojis
+    // Build lookup map for emojis
     const emojiMap = new Map<string, any>();
     for (const emo of emojiPickerRenderer.emojis || []) {
       if (emo.emojiId) emojiMap.set(emo.emojiId, emo);
     }
 
-    // YouTube API mới: root emojis rỗng → tìm đệ quy an toàn không gây tràn RAM
+    // Modern YouTube API: root emojis list may be empty -> safe iterative recursive search
     if (emojiMap.size === 0) {
       const stack: any[] = [res];
       while (stack.length > 0) {
@@ -81,9 +81,9 @@ export function extractAndSendChannelEmojis(res: any): void {
 
       const emojis: EmojiItem[] = [];
 
-      // YouTube có 2 format:
-      // 1. Mới: category chứa `emojiIds`, emoji objects nằm trong emojiMap (build từ root hoặc scan)
-      // 2. Cũ: category chứa trực tiếp mảng `emojis` với cấu trúc đầy đủ
+      // YouTube has 2 formats:
+      // 1. Modern: category contains `emojiIds`, emoji objects reside in emojiMap
+      // 2. Legacy: category contains array of `emojis` directly
       let sourceEmojis: any[] = [];
       if (renderer.emojiIds && emojiMap.size > 0) {
         sourceEmojis = renderer.emojiIds.map((id: string) => emojiMap.get(id)).filter(Boolean);
@@ -93,8 +93,6 @@ export function extractAndSendChannelEmojis(res: any): void {
       }
 
       for (const emoWrapper of sourceEmojis) {
-        // Trong format cũ, emoji wrapper có thể là { emoji: { emojiId, image, ... } }
-        // Format mới lấy từ map thì `emoWrapper` chính là object emoji
         const emo = emoWrapper.emoji || emoWrapper;
         if (!emo) continue;
 
@@ -128,9 +126,7 @@ export function extractAndSendChannelEmojis(res: any): void {
     let membershipBadge = "";
     let membershipDuration = "";
 
-    // Chỉ kiểm tra badge trực tiếp tại path cố định trong simplebox của user hiện tại.
-    // KHÔNG quét đệ quy để tránh bắt nhầm badge của comment người khác trong response.
-    // Path đúng: simplebox.authorCommentBadge.sponsorCommentBadgeRenderer
+    // Check sponsor badge exclusively on the current user's simplebox authorCommentBadge
     const sponsorBadgeRenderer: SponsorBadgeRenderer | null =
       simplebox?.authorCommentBadge?.sponsorCommentBadgeRenderer ?? null;
 
@@ -140,8 +136,7 @@ export function extractAndSendChannelEmojis(res: any): void {
         sponsorBadgeRenderer.image?.thumbnails?.[0]?.url ||
         "";
       if (badgeUrl) {
-        // Chỉ công nhận là hội viên nếu trong bộ chọn biểu tượng cảm xúc (categories) có chứa emoji tùy chỉnh của kênh (custom emoji).
-        // Nếu không có bất kỳ emoji tùy chỉnh nào, đây chỉ là badge quảng cáo mẫu hoặc badge đã hết hạn của YouTube.
+        // Validate active membership if categories contain channel custom emojis
         const hasCustomEmojis = categories.some(cat => cat.emojis.some(e => e.isCustom));
 
         if (hasCustomEmojis) {

@@ -79,7 +79,7 @@ export function detectAndSendUserRole(res: any): void {
 
     if (isOwner) isMod = true;
 
-    // Gửi role
+    // Dispatch detected user roles to host web app
     if (isOwner || isMod) {
       window.parent.postMessage(
         { type: "VTUBERVN_USER_ROLE", isOwner, isMod },

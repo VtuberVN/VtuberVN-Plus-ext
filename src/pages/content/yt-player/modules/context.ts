@@ -50,7 +50,7 @@ export function getAvatarId(url: string | null | undefined): string {
   return match ? match[1] : url;
 }
 
-/** Thử nhiều pattern regex dự phòng cho một trường, trả về match đầu tiên tìm thấy */
+/** Try fallback regex patterns for a field, returning the first successful match */
 function tryMatchPatterns(doc: string, patterns: RegExp[]): string | undefined {
   for (const pattern of patterns) {
     const match = doc.match(pattern)?.[1];
@@ -59,10 +59,9 @@ function tryMatchPatterns(doc: string, patterns: RegExp[]): string | undefined {
   return undefined;
 }
 
-/** Đọc dữ liệu InnerTube từ biến global trong DOM của trang YouTube (fallback cuối cùng) */
+/** Extract InnerTube configuration from YouTube window/DOM globals as a last-resort fallback */
 function tryExtractFromDom(): Partial<YtLikeData> {
   try {
-    // ytcfg là object global YouTube inject vào mọi trang
     const ytcfgData = (window as unknown as Record<string, unknown>).ytcfg as Record<string, unknown> | undefined;
     if (!ytcfgData || typeof ytcfgData.get !== "function") return {};
     const getCfg = ytcfgData.get as (key: string) => unknown;
@@ -79,7 +78,7 @@ function tryExtractFromDom(): Partial<YtLikeData> {
   return {};
 }
 
-/** Gửi tín hiệu regex/DOM thất bại về Nuxt web để theo dõi */
+/** Dispatch regex/DOM fallback failure telemetry to the parent host frame */
 function notifyRegexFailure(failedFields: string[]): void {
   try {
     window.parent.postMessage(
@@ -92,7 +91,7 @@ function notifyRegexFailure(failedFields: string[]): void {
       "*",
     );
   } catch {
-    // silent fail — window.parent có thể không tồn tại
+    // silent fail
   }
 }
 
@@ -106,7 +105,7 @@ export async function getYtLikeData(): Promise<YtLikeData | null> {
         (r) => r.text(),
       );
 
-      // --- Fallback regex patterns cho từng trường quan trọng ---
+      // --- Fallback regex patterns for core InnerTube fields ---
       const apiKey = tryMatchPatterns(doc, [
         /"INNERTUBE_API_KEY":"(.*?)"/,
         /"innertubeApiKey":"(.*?)"/,
@@ -114,7 +113,7 @@ export async function getYtLikeData(): Promise<YtLikeData | null> {
       ]);
 
       let context: Record<string, unknown> = {};
-      // Dùng new RegExp để tránh esbuild lỗi parse literal regex có ký tự đặc biệt
+      // Use new RegExp to avoid esbuild parsing issues with literal special characters
       const contextPatterns: RegExp[] = [
         new RegExp('\\(\\{"INNERTUBE_CONTEXT":([\\w\\W]*?)}\\)'),
         new RegExp('"INNERTUBE_CONTEXT":([\\w\\W]*?}),"INNERTUBE'),
@@ -128,7 +127,7 @@ export async function getYtLikeData(): Promise<YtLikeData | null> {
             if (Object.keys(context).length > 0) break;
           }
         } catch {
-          // thử pattern tiếp theo
+          // next pattern
         }
       }
 
@@ -177,7 +176,7 @@ export async function getYtLikeData(): Promise<YtLikeData | null> {
       ]);
       const isSubscribed = isSubscribedRaw === "true";
 
-      // --- Fallback sang DOM nếu các trường quan trọng vẫn thiếu ---
+      // --- Fallback to DOM if core fields are missing ---
       const failedFields: string[] = [];
       let domFallback: Partial<YtLikeData> = {};
 
@@ -197,7 +196,7 @@ export async function getYtLikeData(): Promise<YtLikeData | null> {
 
       if (failedFields.length > 0) {
         notifyRegexFailure(failedFields);
-        console.warn("[VtuberVN+] Regex thất bại, các trường bị thiếu:", failedFields);
+        console.warn("[VtuberVN+] Regex parsing failed, missing fields:", failedFields);
       }
 
       if (

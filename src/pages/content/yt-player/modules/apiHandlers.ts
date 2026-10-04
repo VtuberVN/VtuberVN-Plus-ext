@@ -3,7 +3,7 @@ import { videoId, getYtLikeData, fetchYoutubeApi, like, t } from "./context";
 import { detectAndSendUserRole } from "./roleDetector";
 import { extractAndSendChannelEmojis } from "./emojiParser";
 
-/** Phát tín hiệu hết phiên đăng nhập về Nuxt web để hiển thị cảnh báo */
+/** Dispatch session expired signal to host web app */
 function sendSessionExpiredAlert(): void {
   try {
     window.parent.postMessage(
@@ -19,8 +19,8 @@ function sendSessionExpiredAlert(): void {
 }
 
 /**
- * Wrapper an toàn cho fetchYoutubeApi — bắt lỗi 401/403 và phát cảnh báo hết phiên.
- * Trả về response data hoặc null nếu gặp lỗi nghiêm trọng.
+ * Safe wrapper for fetchYoutubeApi — handles 401/403 auth errors and dispatches session expiration alert.
+ * Returns response data or null on critical errors.
  */
 async function safeFetchYoutubeApi(
   endpoint: string,
@@ -29,7 +29,7 @@ async function safeFetchYoutubeApi(
   const ytLikeData = await getYtLikeData();
   if (!ytLikeData) return null;
 
-  // Kiểm tra PAPISID trước — nếu thiếu thì chắc chắn sẽ lỗi auth
+  // Check PAPISID presence first — missing PAPISID indicates unauthenticated state
   if (!ytLikeData.PAPISID) {
     sendSessionExpiredAlert();
     return null;
@@ -37,7 +37,7 @@ async function safeFetchYoutubeApi(
 
   const result = await fetchYoutubeApi(endpoint, bodyData, ytLikeData);
 
-  // Kiểm tra lỗi auth từ response body của InnerTube
+  // Check for authentication failure codes in InnerTube response
   if (result && typeof result === "object") {
     const res = result as Record<string, unknown>;
     const errorCode = (res.error as Record<string, unknown> | undefined)?.code;
@@ -80,7 +80,7 @@ export function initApiHandlers(): void {
           if (channelId && ytLikeData) {
             const res = await fetchYoutubeApi("browse", { browseId: channelId }, ytLikeData);
             
-            // Hàm đệ quy tìm key trong object JSON (chống lại việc YouTube đổi cấu trúc UI)
+            // Recursive helper to find key in nested JSON objects
             const deepFind = (obj: any, key: string): any => {
               if (obj === null || typeof obj !== 'object') return undefined;
               if (key in obj) return obj[key];
@@ -94,12 +94,10 @@ export function initApiHandlers(): void {
             const subscribeBtn = deepFind(res, 'subscribeButtonRenderer');
             const toggleBtn = deepFind(res, 'subscriptionNotificationToggleButtonRenderer');
             
-            // YouTube UI cũ dùng subscribeButtonRenderer, UI mới có thể ẩn đi nhưng notificationPreferenceButton vẫn còn
             const isSubscribed = !!(subscribeBtn?.subscribed || toggleBtn || deepFind(res, 'subscribed') === true);
             let notificationState = 0; // 0 = not subbed or unknown
             
             if (isSubscribed) {
-              // 1 = All, 2 = Personalized, 3 = None
               notificationState = toggleBtn?.currentStateId || 2;
             }
 
@@ -115,7 +113,7 @@ export function initApiHandlers(): void {
         }
       }
 
-      // Đọc Bình Luận (Fetch Comments Continuation)
+      // Fetch Comments (Continuation)
       if (event.data?.event === "fetchComments") {
         try {
           let { continuation } = event.data;
@@ -126,7 +124,6 @@ export function initApiHandlers(): void {
             return;
           }
 
-          // Nếu không có continuation (trang đầu tiên), gọi API /next với videoId để lấy cấu trúc trang
           if (!continuation) {
             const res = await fetchYoutubeApi("next", { videoId }, ytLikeData);
             if (res) {
@@ -168,7 +165,7 @@ export function initApiHandlers(): void {
         }
       }
 
-      // Tải Bình Luận Con (Fetch Comment Replies)
+      // Fetch Comment Replies
       if (event.data?.event === "fetchReplies") {
         try {
           const { continuation, commentKey } = event.data;
@@ -189,7 +186,7 @@ export function initApiHandlers(): void {
         }
       }
 
-      // Đăng bình luận từ xa
+      // Create Comment
       if (event.data?.event === "createComment") {
         try {
           const { commentText, createCommentParams } = event.data;
@@ -210,7 +207,7 @@ export function initApiHandlers(): void {
         }
       }
 
-      // Chỉnh sửa bình luận trực tiếp
+      // Edit Comment
       if (event.data?.event === "editComment") {
         try {
           const { actionParam, commentText, commentKey } = event.data;
@@ -238,7 +235,7 @@ export function initApiHandlers(): void {
         }
       }
 
-      // Like/Dislike bình luận
+      // Like / Dislike Comment
       if (event.data?.event === "likeComment") {
         try {
           const { actionParam } = event.data;
@@ -259,7 +256,7 @@ export function initApiHandlers(): void {
         }
       }
 
-      // Thả tim bình luận
+      // Heart Comment
       if (event.data?.event === "heartComment") {
         try {
           const { actionParam, commentKey } = event.data;
@@ -286,7 +283,7 @@ export function initApiHandlers(): void {
         }
       }
 
-      // Xóa bình luận
+      // Delete Comment
       if (event.data?.event === "deleteComment") {
         try {
           const { actionParam, commentKey } = event.data;
@@ -313,7 +310,7 @@ export function initApiHandlers(): void {
         }
       }
 
-      // Báo vi phạm bình luận
+      // Flag Comment
       if (event.data?.event === "flagComment") {
         try {
           const { actionParam, commentKey } = event.data;
@@ -340,7 +337,7 @@ export function initApiHandlers(): void {
         }
       }
 
-      // Ẩn người dùng khỏi kênh (Block/Hide user)
+      // Block / Hide User from Channel
       if (event.data?.event === "blockComment") {
         try {
           const { actionParam, commentKey } = event.data;
@@ -367,7 +364,7 @@ export function initApiHandlers(): void {
         }
       }
 
-      // Ghim bình luận
+      // Pin Comment
       if (event.data?.event === "pinComment") {
         try {
           const { actionParam, commentKey } = event.data;
@@ -394,7 +391,7 @@ export function initApiHandlers(): void {
         }
       }
 
-      // Bỏ ghim bình luận
+      // Unpin Comment
       if (event.data?.event === "unpinComment") {
         try {
           const { actionParam, commentKey } = event.data;
@@ -421,7 +418,7 @@ export function initApiHandlers(): void {
         }
       }
 
-      // Mod chat: Xóa tin nhắn
+      // Live Chat Moderation: Delete Message
       if (event.data?.event === "deleteChatMessage") {
         try {
           const { params } = event.data;
@@ -448,7 +445,7 @@ export function initApiHandlers(): void {
         }
       }
 
-      // Mod chat: Timeout user
+      // Live Chat Moderation: Timeout User
       if (event.data?.event === "timeoutUser") {
         try {
           const { params } = event.data;
@@ -475,7 +472,7 @@ export function initApiHandlers(): void {
         }
       }
 
-      // Mod chat: Ban user
+      // Live Chat Moderation: Ban User
       if (event.data?.event === "banUser") {
         try {
           const { params } = event.data;
@@ -502,7 +499,7 @@ export function initApiHandlers(): void {
         }
       }
 
-      // Reply bình luận
+      // Create Comment Reply
       if (event.data?.event === "createCommentReply") {
         try {
           const { commentText, createReplyParams } = event.data;
@@ -523,7 +520,7 @@ export function initApiHandlers(): void {
         }
       }
 
-      // Đăng ký kênh từ xa
+      // Subscribe Channel
       if (event.data?.event === "subscribeChannel") {
         try {
           const { channelId } = event.data;
@@ -544,7 +541,7 @@ export function initApiHandlers(): void {
         }
       }
 
-      // Hủy đăng ký kênh từ xa
+      // Unsubscribe Channel
       if (event.data?.event === "unsubscribeChannel") {
         try {
           const { channelId } = event.data;
@@ -565,7 +562,7 @@ export function initApiHandlers(): void {
         }
       }
 
-      // Đồng bộ chéo Lịch sử xem (Batch Sync)
+      // Sync Watch History
       if (event.data?.event === "syncHistory") {
         try {
           const ytLikeData = await getYtLikeData();
@@ -573,7 +570,6 @@ export function initApiHandlers(): void {
             const res = await fetchYoutubeApi("browse", { browseId: "FEhistory" }, ytLikeData);
             const videoIds: string[] = [];
 
-            // Traverse JSON to find videoIds in history
             const contents =
               res?.contents?.twoColumnBrowseResultsRenderer?.tabs?.[0]
                 ?.tabRenderer?.content?.sectionListRenderer?.contents;
