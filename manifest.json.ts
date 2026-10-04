@@ -20,8 +20,8 @@ const vtuberMatches = [
 const manifest = {
   manifest_version: 3,
   version: "<get from package.json>",
-  name: "VtuberVN+",
-  description: "VtuberVN companion extension",
+  name: "VtuberVN Star (Lite)",
+  description: "Tiện ích mở rộng rút gọn mở khung Live Chat kính mờ cho VtuberVN.",
   options_ui: {
     page: "src/pages/options/index.html",
     open_in_tab: false,

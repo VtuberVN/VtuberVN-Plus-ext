@@ -1,10 +1,10 @@
 {
   "extName": {
-    "message": "VtuberVN+",
+    "message": "VtuberVN Star (Lite)",
     "description": "Extension name"
   },
   "extDescription": {
-    "message": "Official companion extension for VtuberVN. Synchronizes watch history and likes, facilitates YouTube comment/chat moderation, and forwards audio data for the music visualizer.",
+    "message": "Official lightweight companion extension for VtuberVN: unlocks frosted live chat and adds quick-switch YouTube button.",
     "description": "Extension description"
   }
 }
