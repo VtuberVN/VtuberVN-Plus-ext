@@ -10,18 +10,26 @@ window.VtuberVN_AUDIO_VISUALIZER_SUPPORTED = true;
 if (!import.meta.env.DEV) {
   const _log = console.log;
   console.log = (...args: any[]) => {
-    if (args.length > 0 && typeof args[0] === 'string' && (args[0].includes('[VtuberVN+]') || args[0].includes('[VtuberVN+ Lite]'))) {
+    if (args.length > 0 && typeof args[0] === 'string' && args[0].includes('[VtuberVN')) {
       return;
     }
     _log(...args);
   };
 }
 
-console.log("[VtuberVN+] Activated");
+if (import.meta.env.DEV) {
+  console.log("[VtuberVN+] Activated");
+}
 
 // ─── Audio Visualizer Bridge ──────────────────────────────────────
 // Relay audio data from YouTube embed iframes to main page context.
 window.addEventListener('message', (event) => {
+  const isTrustedOrigin =
+    event.origin === window.location.origin ||
+    event.origin === 'https://www.youtube.com' ||
+    event.origin === 'https://www.youtube-nocookie.com';
+  if (!isTrustedOrigin) return;
+
   const data = event.data;
   if (!data?.type) return;
 
@@ -39,7 +47,7 @@ function detectAndSyncLocale() {
   const storedLocale = localStorage.getItem('i18n_redirected');
   const locale = htmlLang || storedLocale || navigator.language.split('-')[0] || 'vi';
   const normalized = locale.startsWith('vi') ? 'vi' : 'en';
-  window.postMessage({ type: 'VTUBERVN_LOCALE_SYNC', locale: normalized }, '*');
+  window.postMessage({ type: 'VTUBERVN_LOCALE_SYNC', locale: normalized }, window.location.origin);
 }
 
 detectAndSyncLocale();
@@ -49,28 +57,36 @@ const localeObserver = new MutationObserver(() => {
 });
 localeObserver.observe(document.documentElement, { attributes: true, attributeFilter: ['lang'] });
 
-window.addEventListener('storage', (e) => {
-  if (e.key === 'vtubervn_locale' && e.newValue) {
-    window.postMessage({ type: 'VTUBERVN_LOCALE_SYNC', locale: e.newValue }, '*');
-  }
-});
-
 // Theme Sync
 function detectAndSyncTheme() {
-  const isDark = document.documentElement.classList.contains('dark') || 
-                 document.body?.classList.contains('dark') ||
-                 !document.documentElement.classList.contains('light');
-  
-  const computedStyle = getComputedStyle(document.documentElement);
-  const primaryRgb = computedStyle.getPropertyValue('--v-theme-primary').trim() || '235, 143, 225';
-  
-  window.postMessage({
-    type: 'VTUBERVN_THEME_SYNC',
-    theme: {
-      isDark,
-      primaryRgb,
+  try {
+    const htmlEl = document.documentElement;
+    const bodyEl = document.body;
+    const appEl = document.querySelector('.v-application') || htmlEl;
+
+    const isDark =
+      htmlEl.classList.contains('dark') ||
+      bodyEl?.classList.contains('dark') ||
+      htmlEl.getAttribute('data-theme') === 'dark' ||
+      appEl.classList.contains('v-theme--dark') ||
+      (!htmlEl.classList.contains('light') && window.matchMedia('(prefers-color-scheme: dark)').matches);
+
+    const styles = getComputedStyle(appEl);
+    let primaryRgb = styles.getPropertyValue('--v-theme-primary').trim();
+    if (!primaryRgb) {
+      primaryRgb = isDark ? '235, 143, 225' : '156, 39, 176';
     }
-  }, '*');
+
+    window.postMessage({
+      type: 'VTUBERVN_THEME_SYNC',
+      theme: {
+        isDark,
+        primaryRgb,
+      }
+    }, window.location.origin);
+  } catch {
+    // silent fail
+  }
 }
 
 detectAndSyncTheme();
@@ -78,7 +94,18 @@ detectAndSyncTheme();
 const themeObserver = new MutationObserver(() => {
   detectAndSyncTheme();
 });
-themeObserver.observe(document.documentElement, { attributes: true, attributeFilter: ['class', 'style'] });
+themeObserver.observe(document.documentElement, {
+  attributes: true,
+  attributeFilter: ['class', 'data-theme', 'style'],
+});
+
+window.addEventListener('storage', (e) => {
+  if (e.key === 'vtubervn_locale' && e.newValue) {
+    window.postMessage({ type: 'VTUBERVN_LOCALE_SYNC', locale: e.newValue }, window.location.origin);
+  }
+  if (e.key && (e.key.includes('theme') || e.key.includes('settings') || e.key.includes('color-mode'))) {
+    detectAndSyncTheme();
+  }
+});
 
 export {};
-

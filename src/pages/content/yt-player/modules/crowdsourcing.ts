@@ -27,13 +27,14 @@ let videoContext: VideoContext = {};
 function requestYtCfgFromMain(): Promise<YtExtractorData> {
   return new Promise((resolve) => {
     const handler = (event: MessageEvent<{ type?: string; data?: YtExtractorData }>) => {
+      if (event.origin !== window.location.origin && event.origin !== "https://www.youtube.com") return;
       if (event.data?.type === "VTUBERVN_YTDATA_FROM_MAIN") {
         window.removeEventListener("message", handler as EventListener);
         resolve(event.data.data ?? {});
       }
     };
     window.addEventListener("message", handler as EventListener);
-    window.postMessage({ type: "VTUBERVN_REQUEST_YTDATA" }, "*");
+    window.postMessage({ type: "VTUBERVN_REQUEST_YTDATA" }, window.location.origin);
     setTimeout(() => {
       window.removeEventListener("message", handler as EventListener);
       resolve({});
@@ -180,6 +181,7 @@ function sendCrowdsourcingData(params: {
   ccv?: number;
   likeCount?: number;
 }): void {
+  const targetOrigin = validOrigin(document.referrer) ? new URL(document.referrer).origin : "https://vtuberhub.vn";
   window.parent.postMessage(
     {
       type: "VTUBERVN_CROWDSOURCING_DATA",
@@ -189,7 +191,7 @@ function sendCrowdsourcingData(params: {
       likeCount: params.likeCount ?? 0,
       likeStatus: "INDIFFERENT",
     },
-    "*"
+    targetOrigin
   );
 }
 
@@ -293,6 +295,7 @@ export function initCrowdsourcing(): void {
   void startCrowdsourcing();
 
   window.addEventListener("message", (event: MessageEvent<Record<string, unknown>>) => {
+    if (!validOrigin(event.origin) && event.origin !== window.location.origin && event.origin !== "https://www.youtube.com") return;
     const evEvent = event.data?.event;
 
     // Receive video context from host web app (YoutubePlayer.vue on ready)

@@ -53,17 +53,18 @@
       isLiveContent: !!pr?.videoDetails?.isLiveContent,
       videoId: pr?.videoDetails?.videoId,
       apiKey,
-      clientName: clientName ?? "WEB_EMBEDDED",
+      clientName: clientName ?? "WEB_EMBEDDED_PLAYER",
       clientVersion,
     };
   }
 
   function send() {
-    window.postMessage({ type: "VTUBERVN_YTDATA_FROM_MAIN", data: extract() }, "*");
+    window.postMessage({ type: "VTUBERVN_YTDATA_FROM_MAIN", data: extract() }, window.location.origin);
   }
 
   // Listen for request from isolated world content script
   window.addEventListener("message", (event: MessageEvent<{ type?: string }>) => {
+    if (event.origin !== window.location.origin && event.origin !== "https://www.youtube.com") return;
     if (event.data?.type === "VTUBERVN_REQUEST_YTDATA") {
       send();
     }

@@ -1,5 +1,6 @@
 import { EmojiCategory, EmojiItem, SponsorBadgeRenderer } from "./types";
-import { setCurrentUserAvatarUrl, getCurrentUserAvatarUrl, getAvatarId, t } from "./context";
+import { setCurrentUserAvatarUrl, t } from "./context";
+import { validOrigin } from "@utils";
 
 export function extractAndSendChannelEmojis(res: any): void {
   try {
@@ -81,9 +82,6 @@ export function extractAndSendChannelEmojis(res: any): void {
 
       const emojis: EmojiItem[] = [];
 
-      // YouTube has 2 formats:
-      // 1. Modern: category contains `emojiIds`, emoji objects reside in emojiMap
-      // 2. Legacy: category contains array of `emojis` directly
       let sourceEmojis: any[] = [];
       if (renderer.emojiIds && emojiMap.size > 0) {
         sourceEmojis = renderer.emojiIds.map((id: string) => emojiMap.get(id)).filter(Boolean);
@@ -126,7 +124,6 @@ export function extractAndSendChannelEmojis(res: any): void {
     let membershipBadge = "";
     let membershipDuration = "";
 
-    // Check sponsor badge exclusively on the current user's simplebox authorCommentBadge
     const sponsorBadgeRenderer: SponsorBadgeRenderer | null =
       simplebox?.authorCommentBadge?.sponsorCommentBadgeRenderer ?? null;
 
@@ -136,7 +133,6 @@ export function extractAndSendChannelEmojis(res: any): void {
         sponsorBadgeRenderer.image?.thumbnails?.[0]?.url ||
         "";
       if (badgeUrl) {
-        // Validate active membership if categories contain channel custom emojis
         const hasCustomEmojis = categories.some(cat => cat.emojis.some(e => e.isCustom));
 
         if (hasCustomEmojis) {
@@ -167,6 +163,7 @@ export function extractAndSendChannelEmojis(res: any): void {
       }
     }
 
+    const targetOrigin = validOrigin(document.referrer) ? new URL(document.referrer).origin : "https://vtuberhub.vn";
     window.parent.postMessage(
       {
         type: "VTUBERVN_CHANNEL_EMOJIS",
@@ -176,7 +173,7 @@ export function extractAndSendChannelEmojis(res: any): void {
         membershipBadge,
         membershipDuration,
       },
-      "*",
+      targetOrigin,
     );
   } catch (err) {
     console.error(t("errorFetchingComments"), err);

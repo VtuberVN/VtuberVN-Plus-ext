@@ -45,7 +45,7 @@
             playerResponse,
           },
         },
-        "*",
+        window.location.origin,
       );
     } catch (e) {
       window.postMessage(
@@ -53,7 +53,7 @@
           type: "VTUBERVN_EXTRACTED_YTCFG",
           data: {},
         },
-        "*",
+        window.location.origin,
       );
     }
   }
@@ -61,6 +61,7 @@
   sendYtcfg();
 
   window.addEventListener("message", (event: MessageEvent) => {
+    if (event.origin !== window.location.origin && event.origin !== "https://www.youtube.com") return;
     if (event.data?.type === "VTUBERVN_REQUEST_YTCFG") {
       sendYtcfg();
     }

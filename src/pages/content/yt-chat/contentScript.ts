@@ -5,7 +5,7 @@ import injectPath from "./inject?script&module";
 // Host check: ensure script only executes in YouTube context (matches *://*.youtube.com/live_chat*)
 const isYouTubeHost = window.location.hostname === 'www.youtube.com' || window.location.hostname.endsWith('.youtube.com');
 if (!isYouTubeHost) {
-  console.warn("[VtuberVN+ Lite] yt-chat content script ignored on non-YouTube hostname:", window.location.hostname);
+  console.warn("[VtuberVN+] yt-chat content script ignored on non-YouTube hostname:", window.location.hostname);
 } else {
   inject(injectPath);
 
@@ -39,8 +39,7 @@ if (!isYouTubeHost) {
   // Default Base Style (bundled fallback when offline or before remote patch loads)
   const DEFAULT_BASE_STYLE = `
     /* Override YouTube default background colors to transparent */
-    :root, html[dark] {
-      color-scheme: dark !important;
+    :root {
       --v-theme-primary: 156, 39, 176;
       --yt-chat-bg: transparent;
       --yt-live-chat-background-color: transparent !important;
@@ -48,12 +47,31 @@ if (!isYouTubeHost) {
       --yt-live-chat-secondary-background-color: transparent !important;
       --yt-live-chat-header-background-color: transparent !important;
       --yt-live-chat-banner-gradient-scrim: transparent !important;
+      --yt-live-chat-panel-pages-background: transparent !important;
+      --yt-live-chat-message-input-renderer-background: transparent !important;
+      --yt-live-chat-primary-background: transparent !important;
       --yt-spec-base-background: transparent !important;
       --yt-spec-general-background-a: transparent !important;
+      --yt-spec-general-background-b: transparent !important;
+      --yt-spec-touch-response: transparent !important;
+    }
+
+    /* Dark Mode Theme */
+    html[dark] {
+      color-scheme: dark !important;
       --yt-spec-additive-background: rgba(255, 255, 255, 0.05) !important;
       --yt-live-chat-primary-text-color: #f1f1f5 !important;
       --yt-live-chat-secondary-text-color: #a2a2ad !important;
       --yt-live-chat-tertiary-text-color: rgba(255, 255, 255, 0.5) !important;
+    }
+
+    /* Light Mode Theme */
+    html:not([dark]) {
+      color-scheme: light !important;
+      --yt-spec-additive-background: rgba(0, 0, 0, 0.05) !important;
+      --yt-live-chat-primary-text-color: #0f0f0f !important;
+      --yt-live-chat-secondary-text-color: #606060 !important;
+      --yt-live-chat-tertiary-text-color: rgba(0, 0, 0, 0.5) !important;
     }
 
     html, body,
@@ -61,15 +79,62 @@ if (!isYouTubeHost) {
     yt-live-chat-renderer,
     yt-live-chat-item-list-renderer,
     yt-live-chat-header-renderer,
+    yt-live-chat-header-renderer #primary-content,
+    yt-live-chat-header-renderer #header,
+    #chat.yt-live-chat-renderer,
+    #chat,
     #primary-content,
     #item-scroller,
+    #item-offset,
+    #items,
+    #items.yt-live-chat-item-list-renderer,
     #item-list,
     #chat-messages,
     #contents,
-    #ticker,
     #contents.yt-live-chat-renderer,
-    #panel-pages {
+    #contents.yt-live-chat-item-list-renderer,
+    yt-live-chat-item-list-renderer #contents,
+    yt-live-chat-item-list-renderer #item-scroller,
+    #ticker,
+    #panel-pages,
+    #panel-pages.yt-live-chat-renderer,
+    yt-live-chat-message-input-renderer,
+    #input-panel,
+    #input-panel.yt-live-chat-message-input-renderer,
+    iron-pages#panel-pages,
+    yt-live-chat-docked-message-renderer,
+    #reaction-control-panel-overlay,
+    yt-reaction-control-panel-overlay-view-model,
+    #top-level-buttons-computed,
+    yt-live-chat-action-panel-renderer,
+    #action-panel.yt-live-chat-renderer,
+    #action-panel,
+    #show-more-button,
+    yt-live-chat-ticker-renderer,
+    #separator.yt-live-chat-renderer {
       background: transparent !important;
+      background-color: transparent !important;
+    }
+
+    /* Live chat input box with glassmorphism effect */
+    yt-live-chat-message-input-renderer #container {
+      background: rgba(255, 255, 255, 0.06) !important;
+      backdrop-filter: blur(8px) !important;
+      -webkit-backdrop-filter: blur(8px) !important;
+      border: 1px solid rgba(255, 255, 255, 0.1) !important;
+      border-radius: 8px !important;
+      margin: 4px 8px !important;
+    }
+    yt-live-chat-message-input-renderer #input-panel {
+      background: transparent !important;
+      background-color: transparent !important;
+    }
+    yt-live-chat-message-input-renderer #author-name,
+    yt-live-chat-message-input-renderer #input,
+    yt-live-chat-text-input-field-renderer #input,
+    yt-live-chat-text-input-field-renderer #label,
+    #input-panel [contenteditable="true"] {
+      color: #f1f1f5 !important;
     }
 
     /* Disable YouTube's gradient fade mask at top/bottom of chat */
@@ -148,8 +213,87 @@ if (!isYouTubeHost) {
     yt-live-chat-pinned-message-renderer #content {
       background: transparent !important;
     }
-    yt-live-chat-pinned-message-renderer * {
+    yt-live-chat-pinned-message-renderer *:not(a):not(.yt-core-attributed-string__link) {
       color: #f1f1f5 !important;
+    }
+
+    /* Preserve YouTube's standard blue link color in live chat & pinned messages */
+    html[dark] yt-live-chat-text-message-renderer[author-type="owner"] #message a,
+    html[dark] yt-live-chat-text-message-renderer[author-type="owner"] #message a *,
+    html[dark] yt-live-chat-text-message-renderer #message a,
+    html[dark] yt-live-chat-text-message-renderer #message a *,
+    html[dark] yt-live-chat-pinned-message-renderer #message a,
+    html[dark] yt-live-chat-pinned-message-renderer #message a *,
+    html[dark] yt-live-chat-pinned-message-renderer a,
+    html[dark] yt-live-chat-pinned-message-renderer a *,
+    html[dark] yt-live-chat-text-message-renderer a,
+    html[dark] yt-live-chat-text-message-renderer a *,
+    html[dark] a.yt-core-attributed-string__link,
+    html[dark] a.yt-core-attributed-string__link *,
+    html[dark] #message a.yt-simple-endpoint,
+    html[dark] #message a.yt-simple-endpoint * {
+      color: #3ea6ff !important;
+      text-decoration: underline !important;
+      text-underline-offset: 2px !important;
+      cursor: pointer !important;
+      word-break: break-all !important;
+      transition: color 0.15s ease, opacity 0.15s ease !important;
+    }
+    html[dark] yt-live-chat-text-message-renderer[author-type="owner"] #message a:hover,
+    html[dark] yt-live-chat-text-message-renderer[author-type="owner"] #message a:hover *,
+    html[dark] yt-live-chat-text-message-renderer #message a:hover,
+    html[dark] yt-live-chat-text-message-renderer #message a:hover *,
+    html[dark] yt-live-chat-pinned-message-renderer #message a:hover,
+    html[dark] yt-live-chat-pinned-message-renderer #message a:hover *,
+    html[dark] yt-live-chat-pinned-message-renderer a:hover,
+    html[dark] yt-live-chat-pinned-message-renderer a:hover *,
+    html[dark] yt-live-chat-text-message-renderer a:hover,
+    html[dark] yt-live-chat-text-message-renderer a:hover *,
+    html[dark] a.yt-core-attributed-string__link:hover,
+    html[dark] a.yt-core-attributed-string__link:hover *,
+    html[dark] #message a.yt-simple-endpoint:hover,
+    html[dark] #message a.yt-simple-endpoint:hover * {
+      color: #70baff !important;
+      opacity: 0.9 !important;
+    }
+
+    html:not([dark]) yt-live-chat-text-message-renderer[author-type="owner"] #message a,
+    html:not([dark]) yt-live-chat-text-message-renderer[author-type="owner"] #message a *,
+    html:not([dark]) yt-live-chat-text-message-renderer #message a,
+    html:not([dark]) yt-live-chat-text-message-renderer #message a *,
+    html:not([dark]) yt-live-chat-pinned-message-renderer #message a,
+    html:not([dark]) yt-live-chat-pinned-message-renderer #message a *,
+    html:not([dark]) yt-live-chat-pinned-message-renderer a,
+    html:not([dark]) yt-live-chat-pinned-message-renderer a *,
+    html:not([dark]) yt-live-chat-text-message-renderer a,
+    html:not([dark]) yt-live-chat-text-message-renderer a *,
+    html:not([dark]) a.yt-core-attributed-string__link,
+    html:not([dark]) a.yt-core-attributed-string__link *,
+    html:not([dark]) #message a.yt-simple-endpoint,
+    html:not([dark]) #message a.yt-simple-endpoint * {
+      color: #065fd4 !important;
+      text-decoration: underline !important;
+      text-underline-offset: 2px !important;
+      cursor: pointer !important;
+      word-break: break-all !important;
+      transition: color 0.15s ease, opacity 0.15s ease !important;
+    }
+    html:not([dark]) yt-live-chat-text-message-renderer[author-type="owner"] #message a:hover,
+    html:not([dark]) yt-live-chat-text-message-renderer[author-type="owner"] #message a:hover *,
+    html:not([dark]) yt-live-chat-text-message-renderer #message a:hover,
+    html:not([dark]) yt-live-chat-text-message-renderer #message a:hover *,
+    html:not([dark]) yt-live-chat-pinned-message-renderer #message a:hover,
+    html:not([dark]) yt-live-chat-pinned-message-renderer #message a:hover *,
+    html:not([dark]) yt-live-chat-pinned-message-renderer a:hover,
+    html:not([dark]) yt-live-chat-pinned-message-renderer a:hover *,
+    html:not([dark]) yt-live-chat-text-message-renderer a:hover,
+    html:not([dark]) yt-live-chat-text-message-renderer a:hover *,
+    html:not([dark]) a.yt-core-attributed-string__link:hover,
+    html:not([dark]) a.yt-core-attributed-string__link:hover *,
+    html:not([dark]) #message a.yt-simple-endpoint:hover,
+    html:not([dark]) #message a.yt-simple-endpoint:hover * {
+      color: #0448a3 !important;
+      opacity: 0.9 !important;
     }
 
     /* Channel owner & moderator message styling */
@@ -174,6 +318,36 @@ if (!isYouTubeHost) {
     }
     yt-live-chat-text-message-renderer:not([author-type="owner"]):not([author-type="moderator"]):not([author-type="member"]):not([author-type="verified"]) #author-name {
       color: #f1f1f5 !important;
+    }
+
+    /* Ensure custom member loyalty badge is visible (prevent fallback to grey star) */
+    yt-live-chat-author-badge-renderer[type="member"],
+    yt-live-chat-author-badge-renderer[type="member"] #image,
+    yt-live-chat-author-badge-renderer[type="member"] #image img {
+      display: inline-block !important;
+      vertical-align: middle !important;
+      border-radius: 2px !important;
+      width: 16px !important;
+      height: 16px !important;
+    }
+    yt-live-chat-author-badge-renderer[type="member"] img:not([hidden]) {
+      display: inline-block !important;
+      opacity: 1 !important;
+      visibility: visible !important;
+    }
+    /* Hide default star SVG icon when channel has a custom badge image */
+    yt-live-chat-author-badge-renderer[type="member"]:has(img[src]) yt-icon#icon,
+    yt-live-chat-author-badge-renderer[type="member"]:has(#image:not([hidden])) yt-icon#icon {
+      display: none !important;
+    }
+    /* Member username highlight using YouTube's standard green */
+    html[dark] yt-live-chat-text-message-renderer[author-type="member"] #author-name {
+      color: #2ba640 !important;
+      font-weight: 500 !important;
+    }
+    html:not([dark]) yt-live-chat-text-message-renderer[author-type="member"] #author-name {
+      color: #0f8b2d !important;
+      font-weight: 500 !important;
     }
 
     /* Custom Scrollbar Styles */
@@ -279,14 +453,21 @@ if (!isYouTubeHost) {
   // ─── OTA Dynamic Patch Fetcher ──────────────────────────────────
   const PATCH_API_URLS = [
     "https://vtuberhub.vn/api/v1/extension/livechat-theme",
-    "http://localhost:3000/api/v1/extension/livechat-theme",
-    "http://localhost:8080/api/v1/extension/livechat-theme",
   ];
 
   interface LiveChatPatchStorage {
     version: string;
     css: string;
     fetchedAt: number;
+  }
+
+  function isValidPatch(data: unknown): data is { css: { base: string }; patchVersion: string } {
+    if (!data || typeof data !== "object") return false;
+    const d = data as { css?: { base?: string }; patchVersion?: string };
+    if (typeof d.patchVersion !== "string" || !/^[0-9a-zA-Z._-]{1,32}$/.test(d.patchVersion)) return false;
+    if (!d.css || typeof d.css.base !== "string") return false;
+    if (d.css.base.length === 0 || d.css.base.length > 200 * 1024) return false;
+    return true;
   }
 
   async function fetchLiveChatPatch(force = false) {
@@ -304,7 +485,7 @@ if (!isYouTubeHost) {
         if (!res.ok) continue;
         const data = await res.json();
 
-        if (data?.css?.base && data?.patchVersion) {
+        if (isValidPatch(data)) {
           const newPatch: LiveChatPatchStorage = {
             version: data.patchVersion,
             css: data.css.base,
@@ -462,7 +643,8 @@ if (!isYouTubeHost) {
     if (isClose) {
       console.log("[VtuberVN+] Header close button clicked, notifying parent window to close chat");
       try {
-        window.parent.postMessage({ type: "VTUBERVN_CLOSE_CHAT" }, "*");
+        const targetOrigin = validOrigin(document.referrer) ? new URL(document.referrer).origin : "https://vtuberhub.vn";
+        window.parent.postMessage({ type: "VTUBERVN_CLOSE_CHAT" }, targetOrigin);
       } catch {
         // Ignore cross-origin error
       }
